@@ -1,0 +1,157 @@
+<p>OpenStreetMap Project
+Data Wrangling with MongoDB
+Allan Visochek</p>
+<p>Map Area: Lexington, KY, United States</p>
+<p>https://mapzen.com/metro-extracts/<br />
+(select Lexington,Kentucky)</p>
+<ol>
+<li>Problems Encountered in the Map
+nodes abbreviated as nd
+gnis and tiger type tags
+redundant city names</li>
+<li>Data Overview</li>
+<li>Additional Ideas
+Extracts for more specific areas
+Additional data exploration using MongoDB
+Conclusion</li>
+</ol>
+<h1 id="1-problems-encountered-in-the-map">1. Problems Encountered in the Map</h1>
+<h2 id="the-following-problems-were-encountered-in-the-dataset">The following problems were encountered in the dataset:</h2>
+<h3 id="-nodes-labeled-as-nd">-Nodes labeled as "nd"</h3>
+<p>Before downloading the data to the database, I noticed that there were a large number of elements in the nd category. Assuming that this was an abbreviation for node, I updated the all of the code to include elements with the nd tag, and updated the data.py file to list their type as "node" in the database.</p>
+<h2 id="-tiger-and-gnis-tag-types">-TIGER and GNIS tag types</h2>
+<p>I then ran tags.py to find all the unique tag names and their count. I saw that there were a large number of elements and several tags under the gnis and tiger categories. Searching through the documentation, I found that tiger and gnis each refer to independent datasets that were uploaded to the OSM archive. I updated the data.py file to create new objects to contain the gnis and tiger data, and easily identify the elements that are tiger or gnis data.</p>
+<h5 id="-find-the-number-of-elements-with-address-gnis-and-tiger-type-tags-respectively">- Find the number of elements with address, gnis, and tiger type tags, respectively.</h5>
+<blockquote>
+<p>db.fourth_run.find({"address":{"$exists":"true"}}).count()</p>
+</blockquote>
+<p>3433</p>
+<blockquote>
+<p>db.fourth_run.find({"gnis":{"$exists":"true"}}).count()</p>
+</blockquote>
+<p>866</p>
+<blockquote>
+<p>db.fourth_run.find({"tiger":{"$exists":"true"}}).count()</p>
+</blockquote>
+<p>19738</p>
+<h2 id="-redundant-city-names">-Redundant City Names</h2>
+<p>Once the data was uploaded to the database, I found that several of the cities were inconsistently named (i.e Lexington, LEXINGTON, lexington, and Lexington, KY). I updated the data.py file to map all variations of each city name to the one name.</p>
+<h5 id="list-each-of-the-distinct-city-names-before-and-after-cleaning-the-city-name">List each of the distinct city names before and after cleaning the city name</h5>
+<blockquote>
+<p>db.first_run.distinct("address.city")</p>
+</blockquote>
+<p>["Lexington", "Georgetown", "Midway", "Paris", "Lexington, KY", "Nicholasville", "Versailles, KY", "Lexingotn", "lexington", "Versailles", "georgetown", "LEXINGTON", "Harrodsburg", "Wilmore", "WILMORE", "versailles", "Lexingtion", "lexingotn", "lexington ky", "Lexington ky"]</p>
+<blockquote>
+<p>db.fourth_run.distinct("address.city")</p>
+</blockquote>
+<p>["Lexington", "Midway", "Georgetown", "Paris", "Nicholasville", "Versailles", "Harrodsburg", "Wilmore"]</p>
+<h1 id="2-data-overview">2. Data Overview</h1>
+<h5 id="this-section-contains-basic-statistics-about-the-dataset-and-the-mongodb-queries-used-to-gather-them">This section contains basic statistics about the dataset and the MongoDB queries used to gather them.</h5>
+<h3 id="file-sizes">File sizes</h3>
+<blockquote>
+<p>lexington_kentucky.osm ......... 63.9 MB</p>
+<p>lexington_kentucky.osm.json .... 62.0 MB</p>
+</blockquote>
+<h2 id="number-of-documents">Number of documents</h2>
+<blockquote>
+<p>db.fourth_run.find().count()</p>
+</blockquote>
+<p>1287362</p>
+<h2 id="number-of-nodes">Number of nodes</h2>
+<blockquote>
+<p>db.fourth_run.find({"type":"node"}).count()</p>
+</blockquote>
+<p>1243866</p>
+<h2 id="number-of-ways">Number of ways</h2>
+<blockquote>
+<p>db.fourth_run.find({"type":"way"}).count()
+43496</p>
+</blockquote>
+<h2 id="number-of-unique-users">Number of unique users</h2>
+<blockquote>
+<p>db.fourth_run.distinct("created.user").length</p>
+</blockquote>
+<p>475</p>
+<h2 id="top-10-contributing-users">Top 10 contributing users</h2>
+<blockquote>
+<p>db.fourth_run.aggregate([{"$group":{"_id":"$created.user", "count":{"$sum":1}}},{"$sort":{"count":-1}},{"$limit":10}])</p>
+</blockquote>
+<p>{ "_id" : null, "count" : 653080 }
+{ "_id" : "woodpeck_fixbot", "count" : 354124 }
+{ "_id" : "buspainter2005", "count" : 26780 }
+{ "_id" : "seshormerow", "count" : 26396 }
+{ "_id" : "LadyDragonfly", "count" : 16622 }
+{ "_id" : "ediyes", "count" : 14540 }
+{ "_id" : "Dr Kludge", "count" : 13508 }
+{ "_id" : "Steven Walter", "count" : 11512 } 
+{ "_id" : "bot-mode", "count" : 11160 }
+{ "_id" : "kyjts", "count" : 9982 }</p>
+<h2 id="number-of-users-appearing-only-once-having-1-post">Number of users appearing only once (having 1 post)</h2>
+<blockquote>
+<p>db.fourth_run.aggregate([{"$group":{"_id":"$created.user", "count":{"$sum":1}}}, {"$group":{"_id":"$count", "num_users":{"$sum":1}}}, {"$sort":{"_id":1}}, {"$limit":1}])</p>
+</blockquote>
+<p>{ "_id" : 2, "num_users" : 71 }</p>
+<h5 id="note-_id-represents-postcount">note: “_id” represents postcount</h5>
+<h1 id="3-additional-ideas">3. Additional Ideas</h1>
+<h3 id="extracts-for-more-specific-areas">Extracts for more specific Areas:</h3>
+<p>To the best of my knowledge, existing APIs and extracts are only able to provide data within square areas. This makes it impossible to query all of the data that is strictly within a given Country, State, County, City, etc. even though plenty of boundary information is available in the OSM archive.</p>
+<p>For example, the following 8 cities were included in the Lexington, KY extract:</p>
+<blockquote>
+<p>db.fourth_run.aggregate([{"$match":{"address.city":{"$exists":1}}},{"$group":{"_id":"$address.city","count":{"$sum":1}}},{"$sort":{"count":-1}},{"$limit":10}])</p>
+</blockquote>
+<p>{ "_id" : "Lexington", "count" : 2333 }
+{ "_id" : "Georgetown", "count" : 589 }
+{ "_id" : "Versailles", "count" : 34 }
+{ "_id" : "Nicholasville", "count" : 25 }
+{ "_id" : "Paris", "count" : 22 }
+{ "_id" : "Wilmore", "count" : 18 }
+{ "_id" : "Midway", "count" : 18 }
+{ "_id" : "Harrodsburg", "count" : 2 }</p>
+<p>After a bit of googling, I found this wikipedia page on point location algorithms:http://en.wikipedia.org/wiki/Point_location</p>
+<p>A planar point location algorithm can be used to determine weather a given point is inside or outside of a polygon (defined by a set of cartesian coordinates) in O(log(n)) time. Using the longitude and laditude of the nodes of a boundary element of a given region as the polygon, a planar point location algorithm could be implemented and integrated into existing APIs in order to allow for extraction within that region.</p>
+<h3 id="additional-data-exploration-using-mongodb-queries">Additional data exploration using MongoDB queries</h3>
+<h2 id="top-10-building-types">Top 10 building types</h2>
+<blockquote>
+<p>db.fourth_run.aggregate([{"$match":{"building":{"$exists":1}}},{"$group":{"_id":"$building","count":{"$sum":1}}},{"$sort":{"count":-1}},{"$limit":15}])</p>
+</blockquote>
+<p>{ "_id" : "yes", "count" : 6081 }
+{ "_id" : "house", "count" : 3315 }
+{ "_id" : "residential", "count" : 583 }
+{ "_id" : "apartments", "count" : 564 }
+{ "_id" : "commercial", "count" : 417 }
+{ "_id" : "university", "count" : 107 }
+{ "_id" : "school", "count" : 73 }
+{ "_id" : "terrace", "count" : 71 }
+{ "_id" : "garage", "count" : 68 }
+{ "_id" : "static_caravan", "count" : 46 }</p>
+<h2 id="most-popular-fast-food-chains">Most popular fast food chains</h2>
+<blockquote>
+<p>db.fourth_run.aggregate([{"$match":{"amenity":{"$exists":1}, "amenity":"fast_food"}},{"$group":{"_id":"$name", "count":{"$sum":1}}}, {"$sort":{"count":-1}},{"$limit":10}])</p>
+</blockquote>
+<p>{ "_id" : "McDonald's", "count" : 22 }
+{ "_id" : "Arby's", "count" : 16 }
+{ "_id" : "Subway", "count" : 16 }
+{ "_id" : "Burger King", "count" : 12 }
+{ "_id" : "Wendy's", "count" : 10 }
+{ "_id" : "Dairy Queen", "count" : 8 }
+{ "_id" : "Jimmy John's", "count" : 8 }
+{ "_id" : "KFC", "count" : 6 }
+{ "_id" : "Taco Bell", "count" : 6 }
+{ "_id" : "Firehouse Subs", "count" : 6 }</p>
+<h4 id="the-usual">the usual....</h4>
+<h2 id="most-common-land-uses">Most common land uses</h2>
+<blockquote>
+<p>db.fourth_run.aggregate([{"$match":{"landuse":{"$exists":1}}},{"$group":{"_id":"$landuse","count":{"$sum":1}}},{"$sort":{"count":-1}},{"$limit":10}])</p>
+</blockquote>
+<p>{ "_id" : "residential", "count" : 110 }
+{ "_id" : "grass", "count" : 93 }
+{ "_id" : "retail", "count" : 60 }
+{ "_id" : "commercial", "count" : 32 }
+{ "_id" : "industrial", "count" : 30 }
+{ "_id" : "reservoir", "count" : 23 }
+{ "_id" : "cemetery", "count" : 23 }
+{ "_id" : "farm", "count" : 22 }
+{ "_id" : "construction", "count" : 20 }
+{ "_id" : "quarry", "count" : 18 }</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>This dataset is quite extensive, but it is largely inconsistent and incomplete. The developments of more rigid guidelines for data entry formats and tools for merging external data and eleminating redundancies in the archive would help considerably.</p>
