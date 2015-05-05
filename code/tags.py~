@@ -28,8 +28,7 @@ def key_type(element, keys):
         else:
             keys['other']+=1
 	
-	## uncomment to record the name and 
-	## frequency of each distinct key
+	## uncomment to record the name and frequency of each distinct key
 	#if kval in keys.keys():
         #    keys[kval]+=1
         #else:

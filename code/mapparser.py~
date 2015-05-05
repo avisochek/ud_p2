@@ -3,7 +3,7 @@
 """
 mapparser:
 iterate through elements and 
-record the frequency of each tag type.
+record the frequency of each tag name.
 """
 import xml.etree.ElementTree as ET
 import pprint
@@ -23,8 +23,6 @@ def count_tags(filename):
     # get the root element
     event, root = context.next()
 
-    ## iterate through elements and 
-    ## record frequency of each tag type
     for event,elem in context:
 	i+=1
         tag = elem.tag

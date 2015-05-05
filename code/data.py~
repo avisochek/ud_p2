@@ -11,10 +11,10 @@ import pymongo
 from pymongo import MongoClient
 client = MongoClient()
 db = client.lexington_osm
+collection = db['second_run']
 
 """
-Data: iterate through the xml data,
-clean it and put it into a mongodb database..
+Data: this is basically to put the data in the right format...
 """
 
 street_type_re = re.compile(r'\b\S+\.?$', re.IGNORECASE)
@@ -26,10 +26,6 @@ is_gnis = re.compile('^gnis:')
 is_tiger = re.compile('^tiger:')
 CREATED = [ "version", "changeset", "timestamp", "user", "uid"]
 
-
-
-### dictionary to replace improper 
-### street names with proper ones...
 Street_type_map = {
 "Ln": "Lane",
 "St." : "Street",
@@ -49,8 +45,6 @@ Street_type_map = {
 "Ct" :"Court"
 }
 
-### dictionary to replace improper 
-### city names with proper ones...
 City_name_map = {
 "Lexington, KY":"Lexington",
 "Lexingotn":"Lexington",
@@ -67,8 +61,6 @@ City_name_map = {
 }
 
 
-### replace improper 
-### street names with proper ones...
 def clean_street_name(street_name):
     m = street_type_re.search(street_name)
     cleaned_street_name = street_name
@@ -77,20 +69,15 @@ def clean_street_name(street_name):
         if street_type in Street_type_map:
             cleaned_street_name = re.split(street_type_re,street_name)[0]+Street_type_map[street_type]	
     return cleaned_street_name
-
-### replace improper 
-### city names with proper ones...
+	
 def clean_city_name(city_name):
     cleaned_city_name=city_name
     if city_name in City_name_map:
 	cleaned_city_name=City_name_map[city_name]
     return cleaned_city_name
 
-
 def shape_element(element):
     if element.tag == "node" or element.tag == "nd" or element.tag == "way" :
-	### keep track of the element tag
-	### in elem_type
         if element.tag == "way":
 		elem_type="way"
 	else:
@@ -120,9 +107,6 @@ def shape_element(element):
             kval = tag.attrib["k"]
             vval = tag.attrib['v']
             if not problemchars.search(kval) and sum([i==':' for i in kval])<2:
-
-		### place all the addr tags in the address object,
-		### clean the value if it is a street name or a city name.
                 if addr.search(kval):
                     key = kval.split(':')[1]
 		    if key=='street' :
@@ -131,23 +115,16 @@ def shape_element(element):
                         address[key] = clean_city_name(vval)
                     else:
                         address[key] = vval
-		### place all of the gnis tags in the gnis object
-		###
 		elif is_gnis.search(kval):
                     key = kval.split(':')[1]
                     gnis[key] = vval
-		
-		### place all of the tiger tags in the tiger object
 		elif is_tiger.search(kval):
                     key = kval.split(':')[1]
                     tiger[key] = vval
-
-		### all other key value pairs entered straight into the node.
                 else:
                     node[kval] = vval
 
-	## for each object, check if it is used,
-	## and then add it to the node if it is...
+	## insert nexted values...
         if created:
         	node['created'] = created
         if address:
@@ -177,10 +154,6 @@ def process_map(file_in, pretty = False):
     event, root = context.next()
 #######
 ########
-
-    ### iterate through the elements, 
-    ### cleaning the data and insert them into 
-    ### the database...
 
     for _,element in context:
         el = shape_element(element)
