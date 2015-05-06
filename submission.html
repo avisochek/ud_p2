@@ -5,15 +5,16 @@ Allan Visochek</p>
 <p>https://mapzen.com/metro-extracts/<br />
 (select Lexington,Kentucky)</p>
 <ol>
-<li>Problems Encountered in the Map
-nodes abbreviated as nd
-gnis and tiger type tags
-redundant city names</li>
+<li>Problems Encountered in the Map<ul>
+<li>nodes abbreviated as nd</li>
+<li>gnis and tiger type tags</li>
+<li>inconsistent street naming</li>
+<li>redundant city names</li></ul></li>
 <li>Data Overview</li>
-<li>Additional Ideas
-Extracts for more specific areas
-Additional data exploration using MongoDB
-Conclusion</li>
+<li>Additional Ideas<ul>
+<li>Extracts for more specific areas</li>
+<li>Additional data exploration using MongoDB</li>
+<li>Conclusion</li></ul></li>
 </ol>
 <h1 id="1-problems-encountered-in-the-map">1. Problems Encountered in the Map</h1>
 <h2 id="the-following-problems-were-encountered-in-the-dataset">The following problems were encountered in the dataset:</h2>
@@ -34,6 +35,8 @@ Conclusion</li>
 <p>db.fourth_run.find({"tiger":{"$exists":"true"}}).count()</p>
 </blockquote>
 <p>19738</p>
+<h2 id="-inconsistant-street-naming">-Inconsistant Street Names</h2>
+<p>I audited the data, using audit.py to extract the street type from the provided street names. As expected, there were a few variations in the street names for each street type, (i.e. DR, dr, Dr. DRIVE, Drive). I updated data.py to insert the clean the street type in the street name.</p>
 <h2 id="-redundant-city-names">-Redundant City Names</h2>
 <p>Once the data was uploaded to the database, I found that several of the cities were inconsistently named (i.e Lexington, LEXINGTON, lexington, and Lexington, KY). I updated the data.py file to map all variations of each city name to the one name.</p>
 <h5 id="list-each-of-the-distinct-city-names-before-and-after-cleaning-the-city-name">List each of the distinct city names before and after cleaning the city name</h5>
